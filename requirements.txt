@@ -1,5 +1,6 @@
 streamlit
-transformers
-torch
+torch>=2.0.0
+transformers>=4.35.0
+accelerate>=0.20.3
+huggingface_hub>=0.13.4
 Pillow
-huggingface_hub
