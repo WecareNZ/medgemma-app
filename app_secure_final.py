@@ -1,6 +1,6 @@
 
 import streamlit as st
-from transformers import AutoProcessor, AutoModelForVision2Seq
+from transformers import AutoProcessor, VisionEncoderDecoderModel
 from huggingface_hub import login
 from PIL import Image
 import torch
@@ -37,7 +37,7 @@ if uploaded_file and prompt:
     # Load model
     model_id = "google/medgemma-4b-it"
     processor = AutoProcessor.from_pretrained(model_id)
-    model = AutoModelForVision2Seq.from_pretrained(model_id).eval()
+    model = VisionEncoderDecoderModel.from_pretrained(model_id).eval()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
 
