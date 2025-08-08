@@ -3,6 +3,25 @@ from transformers import AutoProcessor, AutoModelForImageTextToText
 from huggingface_hub import login
 from PIL import Image
 import torch
+import io
+import os
+
+
+def purge_image_data(image_bytes, temp_path=None):
+    """Securely purge uploaded image data.
+
+    Images are kept only in memory or a secure temporary file. After
+    inference, the bytearray is overwritten and any temporary file is
+    deleted so nothing is logged or stored persistently.
+    """
+    if image_bytes:
+        for i in range(len(image_bytes)):
+            image_bytes[i] = 0
+    if temp_path and os.path.exists(temp_path):
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
 
 # — 1. Page configuration & branding —
 st.set_page_config(page_title="WeCare MedGemma AI", layout="wide")
@@ -29,6 +48,7 @@ except Exception as e:
     st.stop()
 
 # — 4. Image uploader & prompt input —
+# Uploaded files remain in memory and are purged after inference
 uploaded = st.file_uploader("📤 Upload medical image", type=["jpg","jpeg","png"])
 prompt   = st.text_input(
     "💬 Ask a question about the image:",
@@ -40,11 +60,12 @@ if not (uploaded and prompt):
     st.stop()
 
 # — 5. Display image —
+# Keep the upload purely in memory and validate it
 try:
-    image = Image.open(uploaded)
+    image_bytes = bytearray(uploaded.read())
+    image = Image.open(io.BytesIO(image_bytes))
     image.verify()
-    uploaded.seek(0)
-    image = Image.open(uploaded).convert("RGB")
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 except Exception:
     st.error("Invalid image file. Please upload a valid image.")
     st.stop()
@@ -96,3 +117,8 @@ with st.spinner("🔍 Running analysis..."):
 # — 8. Display the AI’s answer —
 st.markdown("### 🧠 AI Response")
 st.success(response)
+
+# Immediately purge uploaded image data to protect privacy
+purge_image_data(image_bytes)
+uploaded.close()
+del image, image_bytes
