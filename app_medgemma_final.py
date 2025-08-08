@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit_authenticator as stauth
 from transformers import AutoProcessor, AutoModelForImageTextToText
 from huggingface_hub import login
 from PIL import Image
@@ -21,14 +22,32 @@ st.markdown(
     "and get an AI-powered analysis via Google’s MedGemma 4B."
 )
 
-# — 3. Authenticate to Hugging Face —
+# — 3. User login —
+authenticator = stauth.Authenticate(
+    st.secrets["credentials"],
+    st.secrets["cookie"]["name"],
+    st.secrets["cookie"]["key"],
+    st.secrets["cookie"].get("expiry_days", 30)
+)
+name, auth_status, username = authenticator.login("Login", "main")
+if auth_status:
+    authenticator.logout("Logout", "sidebar")
+    st.sidebar.write(f"Welcome *{name}*")
+else:
+    if auth_status is False:
+        st.error("Username/password is incorrect")
+    else:
+        st.info("Please log in to continue.")
+    st.stop()
+
+# — 4. Authenticate to Hugging Face —
 try:
     login(token=st.secrets["HF_TOKEN"])
 except Exception as e:
     st.error(f"Authentication failed: {e}")
     st.stop()
 
-# — 4. Image uploader & prompt input —
+# — 5. Image uploader & prompt input —
 uploaded = st.file_uploader("📤 Upload medical image", type=["jpg","jpeg","png"])
 prompt   = st.text_input(
     "💬 Ask a question about the image:",
@@ -39,7 +58,7 @@ if not (uploaded and prompt):
     st.info("Please upload an image and enter a question above.")
     st.stop()
 
-# — 5. Display image —
+# — 6. Display image —
 try:
     image = Image.open(uploaded)
     image.verify()
@@ -51,7 +70,7 @@ except Exception:
 
 st.image(image, caption="Uploaded Image", use_column_width=True)
 
-# — 6. Lazy-load & cache processor + model —
+# — 7. Lazy-load & cache processor + model —
 @st.cache_resource(show_spinner=False)
 def load_medgemma():
     model_id = "google/medgemma-4b-it"
@@ -71,7 +90,7 @@ def load_medgemma():
 
 processor, model = load_medgemma()
 
-# — 7. Build the “chat” input & run inference :contentReference[oaicite:0]{index=0}
+# — 8. Build the “chat” input & run inference :contentReference[oaicite:0]{index=0}
 with st.spinner("🔍 Running analysis..."):
     # Apply the chat template (adds <start_of_image>, tokenizes)
     inputs = processor.apply_chat_template(
@@ -93,6 +112,6 @@ with st.spinner("🔍 Running analysis..."):
     # Decode to plain text
     response = processor.decode(gen_tokens, skip_special_tokens=True)
 
-# — 8. Display the AI’s answer —
+# — 9. Display the AI’s answer —
 st.markdown("### 🧠 AI Response")
 st.success(response)

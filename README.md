@@ -36,6 +36,30 @@ export HF_TOKEN=hf_your_token_here
 export HUGGINGFACEHUB_API_TOKEN=hf_your_token_here
 ```
 
+## Configure User Authentication
+
+The app uses [streamlit-authenticator](https://github.com/mkhorasani/Streamlit-Authenticator) to require a login before image upload.
+
+1. Generate a hashed password:
+
+   ```bash
+   python -c "import streamlit_authenticator as stauth; print(stauth.Hasher(['your_password']).generate()[0])"
+   ```
+
+2. Add credentials and cookie settings to `.streamlit/secrets.toml`:
+
+   ```toml
+   [credentials.usernames]
+   user = {name = "Display Name", password = "<hashed_password>"}
+
+   [cookie]
+   name = "medgemma_app"
+   key = "some_signature_key"
+   expiry_days = 1
+   ```
+
+3. Run the app and log in with the username and password.
+
 ## Running the App
 
 Launch the Streamlit server:
@@ -49,4 +73,5 @@ streamlit run app_medgemma_final.py
 - Upload dermatoscope, X-ray, or fundus images.
 - Ask a question about the image and receive a MedGemma 4B-powered response.
 - Uses Hugging Face Hub authentication via `HF_TOKEN`.
+- Login required before uploading images.
 
