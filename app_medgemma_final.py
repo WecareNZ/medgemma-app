@@ -40,7 +40,15 @@ if not (uploaded and prompt):
     st.stop()
 
 # — 5. Display image —
-image = Image.open(uploaded).convert("RGB")
+try:
+    image = Image.open(uploaded)
+    image.verify()
+    uploaded.seek(0)
+    image = Image.open(uploaded).convert("RGB")
+except Exception:
+    st.error("Invalid image file. Please upload a valid image.")
+    st.stop()
+
 st.image(image, caption="Uploaded Image", use_column_width=True)
 
 # — 6. Lazy-load & cache processor + model —
