@@ -3,6 +3,31 @@ from transformers import AutoProcessor, AutoModelForImageTextToText
 from huggingface_hub import login
 from PIL import Image
 import torch
+import uuid
+import datetime
+import os
+import json
+
+# Generate a session identifier for anonymized logging
+if "session_id" not in st.session_state:
+    st.session_state["session_id"] = str(uuid.uuid4())
+
+LOG_DIR = "secure_logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_PATH = os.path.join(LOG_DIR, "feedback.log")
+
+
+def log_interaction(action: str, comment: str, ai_response: str) -> None:
+    """Persist clinician feedback with timestamp and anonymized metadata."""
+    entry = {
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "session_id": st.session_state["session_id"],
+        "action": action,
+        "comment": comment,
+        "response": ai_response,
+    }
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
 
 # — 1. Page configuration & branding —
 st.set_page_config(page_title="WeCare MedGemma AI", layout="wide")
@@ -96,3 +121,19 @@ with st.spinner("🔍 Running analysis..."):
 # — 8. Display the AI’s answer —
 st.markdown("### 🧠 AI Response")
 st.success(response)
+
+# — 9. Clinician feedback —
+st.markdown("### Clinician Feedback")
+feedback = st.radio(
+    "Mark the AI suggestion:",
+    ("confirmed", "rejected", "commented"),
+    index=None,
+)
+
+comment = ""
+if feedback == "commented":
+    comment = st.text_area("Comments", "")
+
+if st.button("Submit feedback") and feedback:
+    log_interaction(feedback, comment, response)
+    st.success("Feedback recorded. Thank you.")
