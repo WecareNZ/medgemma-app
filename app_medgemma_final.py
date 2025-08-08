@@ -21,6 +21,11 @@ st.markdown(
     "and get an AI-powered analysis via Google’s MedGemma 4B."
 )
 
+# Persistent disclaimer about clinical use
+st.warning(
+    "This tool provides decision support only and is not a definitive diagnosis."
+)
+
 # — 3. Authenticate to Hugging Face —
 try:
     login(token=st.secrets["HF_TOKEN"])
