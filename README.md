@@ -50,3 +50,7 @@ streamlit run app_medgemma_final.py
 - Ask a question about the image and receive a MedGemma 4B-powered response.
 - Uses Hugging Face Hub authentication via `HF_TOKEN`.
 
+## Clinical Use Disclaimer
+
+This application is intended for clinical decision support and is not a substitute for professional medical judgment.
+
